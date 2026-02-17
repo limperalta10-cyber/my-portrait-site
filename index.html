@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>I Love You Text Portrait</title>
+    <style>
+        body {
+            background: #000;
+            color: white;
+            font-family: sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        canvas {
+            max-width: 100%;
+            height: auto;
+            border: 1px solid #333;
+        }
+        .controls {
+            margin-bottom: 20px;
+            background: #222;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        input { margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="controls">
+        <label>Step 1: Upload your photo</label><br>
+        <input type="file" id="upload" accept="image/*">
+    </div>
+
+    <canvas id="canvas"></canvas>
+
+    <script>
+        const upload = document.getElementById('upload');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const textPhrase = "I love you ";
+
+        upload.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+
+            reader.onload = (event) => {
+                const img = new Image();
+                img.onload = () => {
+                    // Set canvas size based on image
+                    const scale = 0.8; // Adjust to prevent huge files
+                    canvas.width = img.width * scale;
+                    canvas.height = img.height * scale;
+
+                    // Draw original image hiddenly to sample colors
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+                    
+                    // Clear canvas for text
+                    ctx.fillStyle = "black";
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+                    // Settings for the "text brush"
+                    const fontSize = 10;
+                    ctx.font = `bold ${fontSize}px Arial`;
+                    let charIndex = 0;
+
+                    // Loop through the image in a grid
+                    for (let y = 0; y < canvas.height; y += fontSize) {
+                        for (let x = 0; x < canvas.width; x += fontSize * 0.6) {
+                            // Get pixel color at this position
+                            const pixelIndex = (Math.floor(y) * canvas.width + Math.floor(x)) * 4;
+                            const r = imageData[pixelIndex];
+                            const g = imageData[pixelIndex + 1];
+                            const b = imageData[pixelIndex + 2];
+
+                            // Set text color to match pixel
+                            ctx.fillStyle = `rgb(${r},${g},${b})`;
+
+                            // Get the next character from "I love you"
+                            const char = textPhrase[charIndex % textPhrase.length];
+                            ctx.fillText(char, x, y);
+                            
+                            charIndex++;
+                        }
+                    }
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    </script>
+</body>
+</html>
